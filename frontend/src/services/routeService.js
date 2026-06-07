@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/routes";
+const API_URL = "https://nityant-tech-cn5n.onrender.com/api/route";
 
 export const optimizeRoute = async (depotPostcode) => {
   const response = await axios.post(
