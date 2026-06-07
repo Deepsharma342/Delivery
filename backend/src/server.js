@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 import connectDB from "./config/db.js";
 import stopRoutes from "./routes/stopRoutes.js";
+import routeRoutes from "./routes/routeRoutes.js";
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/stops", stopRoutes);
+app.use("/api/routes", routeRoutes);
 
 app.get("/", (req, res) => {
   res.json({

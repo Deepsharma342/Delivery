@@ -3,10 +3,13 @@ import {
   createStop,
   deleteStop,
   getStops,
+  bulkCreateStops,
 } from "../services/stopService";
+
 
 const AddStops = () => {
   const [postcode, setPostcode] = useState("");
+  const [bulkText, setBulkText] = useState("");
   const [stops, setStops] = useState([]);
 
   const fetchStops = async () => {
@@ -39,6 +42,21 @@ const AddStops = () => {
     fetchStops();
   };
 
+  const handleBulkImport = async () => {
+  const postcodes = bulkText
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (!postcodes.length) return;
+
+  await bulkCreateStops(postcodes);
+
+  setBulkText("");
+
+  fetchStops();
+};
+
   return (
     <div style={{ padding: "20px" }}>
       <h1>Delivery Route Optimizer</h1>
@@ -57,6 +75,26 @@ const AddStops = () => {
       </form>
 
       <hr />
+
+      <hr />
+
+<h2>Bulk Import</h2>
+
+<textarea
+  rows="10"
+  cols="40"
+  placeholder="Paste one postcode per line"
+  value={bulkText}
+  onChange={(e) => setBulkText(e.target.value)}
+/>
+
+<br />
+
+<button onClick={handleBulkImport}>
+  Import Stops
+</button>
+
+<hr />
 
       <h2>Stops</h2>
 
