@@ -14,7 +14,7 @@ connectDB();
 
 app.use(
   cors({
-    origin: "https://nityanttech.netlify.app",
+    origin: "https://deepaustralia.netlify.app",
     credentials: true,
   })
 );
