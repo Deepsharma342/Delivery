@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://nityant-tech-cn5n.onrender.com/api/routes";
+const API_URL = "https://nityant-tech-cn5n.onrender.com/api/stops";
 
 
 export const getStops = async () => {
