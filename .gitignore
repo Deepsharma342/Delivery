@@ -1,1 +1,4 @@
 /backend/.env
+# MongoDB connection URI
+MONGO_URI=mongodb://localhost:27017/deliveryDB
+node_modules
