@@ -20,7 +20,7 @@ const DriverRoute = ({ route, onRefresh }) => {
     const response = await getStops();
 
     
-    const allStops = response.data.data;
+    const allStops = response.data;
 
     console.log("ALL STOPS:", allStops);
 
