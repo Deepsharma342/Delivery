@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { optimizeRoute } from "../services/routeService";
-import DriverRoute from "./DriverRoute";
+import DriverRoute from "./driverRoute";
 
 const OptimizedRoute = () => {
   const [depotPostcode, setDepotPostcode] = useState("");
