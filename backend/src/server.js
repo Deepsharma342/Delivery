@@ -12,7 +12,13 @@ const app = express();
 
 connectDB();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://nityanttech.netlify.app",
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 app.use("/api/stops", stopRoutes);

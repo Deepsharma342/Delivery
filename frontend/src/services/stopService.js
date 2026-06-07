@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/stops";
+const API_URL = "https://nityant-tech-cn5n.onrender.com/api/stops";
 
 
 export const getStops = async () => {
@@ -25,7 +25,7 @@ export const deleteStop = async (id) => {
 
 export const bulkCreateStops = async (postcodes) => {
   const response = await axios.post(
-    "http://localhost:5000/api/stops/bulk",
+    "https://nityant-tech-cn5n.onrender.com/api/stops/bulk",
     {
       postcodes,
     }
