@@ -1,1 +1,1 @@
-This project is desined to optimize the routes of delivery persons it optimize the various routes that diverts the drivers to their destination without having the backtracking so that he can save the fuel of company and his time as well  
+This project is desined to optimize the routes of delivery persons it optimize the various routes that diverts the drivers to their destination without having the backtracking so that he can save the fuel of company and his time as well.
