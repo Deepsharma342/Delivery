@@ -114,7 +114,7 @@ const AddStops = () => {
               handleDelete(stop._id)
             }
           >
-            Delete
+            Delete route 
           </button>
         </div>
       ))}
