@@ -83,7 +83,7 @@ const AddStops = () => {
 <textarea
   rows="10"
   cols="40"
-  placeholder="Paste one postcode per line"
+  placeholder="Paste one postcode per line for bulk import"
   value={bulkText}
   onChange={(e) => setBulkText(e.target.value)}
 />
