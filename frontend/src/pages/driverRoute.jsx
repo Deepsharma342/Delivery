@@ -10,30 +10,22 @@ const DriverRoute = ({ route, onRefresh }) => {
     completed: 0,
   });
 
-  const currentStop = route.find(
-    (stop) => !stop.completed
-  );
+  // ✅ currentStop comes from the OPTIMIZED route prop, not DB
+  const currentStop = route.find((stop) => !stop.completed);
 
-  
   const loadStats = async () => {
-  try {
-    const response = await getStops();
+    try {
+      const response = await getStops();
+      const allStops = response.data;
 
-    
-    const allStops = response.data;
-
-    console.log("ALL STOPS:", allStops);
-
-    setStats({
-      total: allStops.length,
-      completed: allStops.filter(
-        (stop) => stop.completed
-      ).length,
-    });
-  } catch (error) {
-    console.error(error);
-  }
-}; 
+      setStats({
+        total: allStops.length,
+        completed: allStops.filter((stop) => stop.completed).length,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
     loadStats();
@@ -45,13 +37,24 @@ const DriverRoute = ({ route, onRefresh }) => {
     try {
       await completeStop(currentStop._id);
 
-      await loadStats();
+      // ✅ Update localStorage to mark this stop completed
+      // so the optimized order is preserved on refresh
+      const savedRoute = JSON.parse(localStorage.getItem("route") || "[]");
+      const updatedRoute = savedRoute.map((stop) =>
+        stop._id === currentStop._id
+          ? { ...stop, completed: true }
+          : stop
+      );
+      localStorage.setItem("route", JSON.stringify(updatedRoute));
 
+      await loadStats();
       onRefresh();
     } catch (error) {
       console.error(error);
     }
   };
+  
+  // ... rest of your component stays exactly the same
 
   const totalStops = stats.total;
 

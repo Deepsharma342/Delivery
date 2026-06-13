@@ -5,10 +5,8 @@ const API_URL = "https://nityant-tech-cn5n.onrender.com/api/routes";
 export const optimizeRoute = async (depotPostcode) => {
   const response = await axios.post(
     `${API_URL}/optimize`,
-    {
-      depotPostcode,
-    }
+    { depotPostcode }
   );
 
-  return response.data;
+  return response.data.data; // ✅ unwraps the stops array directly
 };

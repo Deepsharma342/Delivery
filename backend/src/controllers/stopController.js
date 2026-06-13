@@ -35,17 +35,11 @@ export const createStop = async (req, res) => {
 export const getStops = async (req, res) => {
   try {
     const stops = await Stop.find().sort({ createdAt: -1 });
-    
-
-    console.log("TOTAL STOPS IN DB:", stops.length);
-    console.log(stops);
-
 
     res.status(200).json({
       success: true,
       count: stops.length,
       data: stops,
-      
     });
   } catch (error) {
     res.status(500).json({
@@ -80,6 +74,23 @@ export const deleteStop = async (req, res) => {
   }
 };
 
+// ✅ NEW — deletes every stop in the DB
+export const deleteAllStops = async (req, res) => {
+  try {
+    const result = await Stop.deleteMany({});
+
+    res.status(200).json({
+      success: true,
+      message: `Deleted ${result.deletedCount} stops`,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export const bulkCreateStops = async (req, res) => {
   try {
     const { postcodes } = req.body;
@@ -95,9 +106,7 @@ export const bulkCreateStops = async (req, res) => {
 
     for (const postcode of postcodes) {
       const cleanPostcode = postcode.trim().toUpperCase();
-
-      const coordinates =
-        await getCoordinatesFromPostcode(cleanPostcode);
+      const coordinates = await getCoordinatesFromPostcode(cleanPostcode);
 
       stops.push({
         postcode: cleanPostcode,
@@ -133,7 +142,6 @@ export const completeStop = async (req, res) => {
     }
 
     stop.completed = true;
-
     await stop.save();
 
     res.status(200).json({

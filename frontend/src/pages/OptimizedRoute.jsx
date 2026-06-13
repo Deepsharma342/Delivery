@@ -60,41 +60,23 @@ const OptimizedRoute = () => {
     }
   };
 
-  const refreshRoute = async () => {
-    if (!depotPostcode.trim()) return;
 
-    try {
-      const response = await optimizeRoute(
-        depotPostcode
-      );
+const refreshRoute = () => {
+  // ✅ Read from localStorage — preserves optimized order
+  const savedRoute = JSON.parse(localStorage.getItem("route") || "[]");
 
-      const updatedRoute = response.data;
+  const hasPendingStops = savedRoute.some((stop) => !stop.completed);
 
-      if (
-        updatedRoute.length === 0 ||
-        updatedRoute.every(
-          (stop) => stop.completed
-        )
-      ) {
-        localStorage.removeItem("route");
-        localStorage.removeItem("depotPostcode");
+  if (!hasPendingStops) {
+    localStorage.removeItem("route");
+    localStorage.removeItem("depotPostcode");
+    setRoute([]);
+    setShowDriverView(false);
+    return;
+  }
 
-        setRoute([]);
-        setShowDriverView(false);
-
-        return;
-      }
-
-      setRoute(updatedRoute);
-
-      localStorage.setItem(
-        "route",
-        JSON.stringify(updatedRoute)
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  setRoute(savedRoute); // ✅ Optimized order preserved
+};
 
   if (showDriverView) {
     return (
