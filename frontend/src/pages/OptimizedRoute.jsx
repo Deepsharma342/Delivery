@@ -14,7 +14,6 @@ const OptimizedRoute = () => {
     if (savedRoute) {
       const parsedRoute = JSON.parse(savedRoute);
 
-      // Only restore if there are pending stops
       const hasPendingStops = parsedRoute.some(
         (stop) => !stop.completed
       );
@@ -71,7 +70,6 @@ const OptimizedRoute = () => {
 
       const updatedRoute = response.data;
 
-      // All stops completed
       if (
         updatedRoute.length === 0 ||
         updatedRoute.every(
@@ -107,6 +105,32 @@ const OptimizedRoute = () => {
     );
   }
 
+  const totalDistance = route.reduce(
+    (sum, stop) =>
+      sum + (stop.distanceFromPrevious || 0),
+    0
+  );
+
+  const longestJump =
+    route.length > 0
+      ? Math.max(
+          ...route.map(
+            (stop) =>
+              stop.distanceFromPrevious || 0
+          )
+        )
+      : 0;
+
+  const shortestJump =
+    route.length > 0
+      ? Math.min(
+          ...route.map(
+            (stop) =>
+              stop.distanceFromPrevious || 0
+          )
+        )
+      : 0;
+
   return (
     <div style={{ padding: "20px" }}>
       <h1>Optimize Route</h1>
@@ -118,6 +142,10 @@ const OptimizedRoute = () => {
         onChange={(e) =>
           setDepotPostcode(e.target.value)
         }
+        style={{
+          padding: "10px",
+          marginRight: "10px",
+        }}
       />
 
       <button onClick={handleOptimize}>
@@ -126,30 +154,77 @@ const OptimizedRoute = () => {
 
       <hr />
 
-      <h2>Optimized Stops</h2>
+      <h2>📍 Route Preview</h2>
+
+      <div
+        style={{
+          border: "1px solid #ccc",
+          padding: "15px",
+          borderRadius: "10px",
+          marginBottom: "20px",
+          background: "#f8f9fa",
+        }}
+      >
+        <p>
+          🚚 Total Stops: {route.length}
+        </p>
+
+        <p>
+          📏 Total Distance:{" "}
+          {totalDistance.toFixed(2)} km
+        </p>
+
+        <p>
+          🔥 Longest Jump:{" "}
+          {longestJump.toFixed(2)} km
+        </p>
+
+        <p>
+          ⚡ Shortest Jump:{" "}
+          {shortestJump.toFixed(2)} km
+        </p>
+      </div>
 
       {route.map((stop, index) => (
         <div
           key={stop._id}
           style={{
             marginBottom: "12px",
-            padding: "10px",
+            padding: "15px",
             border: "1px solid #ccc",
+            borderRadius: "10px",
+            background:
+              stop.distanceFromPrevious > 5
+                ? "#fff3cd"
+                : "#f8f9fa",
           }}
         >
           <strong>
             Stop {index + 1}
           </strong>
 
-          <p>{stop.postcode}</p>
+          <p>
+            📮 {stop.postcode}
+          </p>
 
           <p>
-            Distance From Previous:{" "}
+            📏 Distance From Previous:{" "}
             {stop.distanceFromPrevious?.toFixed(
               2
             )}{" "}
             km
           </p>
+
+          {stop.distanceFromPrevious > 5 && (
+            <p
+              style={{
+                color: "#ff8800",
+                fontWeight: "bold",
+              }}
+            >
+              ⚠ Long Distance Jump
+            </p>
+          )}
         </div>
       ))}
     </div>

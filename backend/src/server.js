@@ -14,7 +14,10 @@ connectDB();
 
 app.use(
   cors({
-    origin: "https://deepaustralia.netlify.app",
+    origin: [
+      "http://localhost:5173",
+      "https://deepaustralia.netlify.app",
+    ],
     credentials: true,
   })
 );
