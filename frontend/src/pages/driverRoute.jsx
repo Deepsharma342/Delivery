@@ -1,8 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { completeStop, getStops } from "../services/stopService";
+
+const ARRIVAL_RADIUS_METRES = 50; // auto-prompt when within 50m
+
+const toRadians = (deg) => (deg * Math.PI) / 180;
+
+const getDistanceMetres = (lat1, lon1, lat2, lon2) => {
+  const R = 6371000;
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
 
 const DriverRoute = ({ route, onRefresh }) => {
   const [stats, setStats] = useState({ total: 0, completed: 0 });
+  const [arrivedPrompt, setArrivedPrompt] = useState(false);
+  const [distanceToStop, setDistanceToStop] = useState(null);
+  const [locationError, setLocationError] = useState("");
+  const watchIdRef = useRef(null);
 
   const currentStop = (route || []).find((stop) => !stop.completed);
 
@@ -19,9 +40,54 @@ const DriverRoute = ({ route, onRefresh }) => {
     }
   };
 
+  // ✅ Watch driver's GPS position continuously
   useEffect(() => {
     loadStats();
-  }, []);
+
+    if (!navigator.geolocation) {
+      setLocationError("GPS not supported on this device");
+      return;
+    }
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (position) => {
+        setLocationError("");
+        const { latitude, longitude } = position.coords;
+
+        if (!currentStop) return;
+
+        const metres = getDistanceMetres(
+          latitude,
+          longitude,
+          currentStop.latitude,
+          currentStop.longitude
+        );
+
+        setDistanceToStop(Math.round(metres));
+
+        // ✅ Auto-prompt when within 50 metres
+        if (metres <= ARRIVAL_RADIUS_METRES) {
+          setArrivedPrompt(true);
+        }
+      },
+      (err) => {
+        if (err.code === 1) setLocationError("Please allow location access for arrival detection");
+        else setLocationError("GPS unavailable — navigation still works");
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 10000,
+      }
+    );
+
+    // Cleanup GPS watcher when stop changes or component unmounts
+    return () => {
+      if (watchIdRef.current) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, [currentStop?._id]); // re-run when stop changes
 
   const handleDelivered = async () => {
     if (!currentStop) return;
@@ -35,11 +101,21 @@ const DriverRoute = ({ route, onRefresh }) => {
       );
       localStorage.setItem("route", JSON.stringify(updatedRoute));
 
+      setArrivedPrompt(false);
+      setDistanceToStop(null);
       await loadStats();
       onRefresh();
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const handleNavigate = () => {
+    // ✅ Level 1 — launches Google Maps with full turn-by-turn navigation
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${currentStop.latitude},${currentStop.longitude}&travelmode=driving`,
+      "_blank"
+    );
   };
 
   // Guard — must be AFTER all hooks
@@ -55,7 +131,8 @@ const DriverRoute = ({ route, onRefresh }) => {
   const totalStops = stats.total;
   const completedStops = stats.completed;
   const remainingStops = totalStops - completedStops;
-  const progress = totalStops > 0 ? Math.round((completedStops / totalStops) * 100) : 0;
+  const progress = totalStops > 0
+    ? Math.round((completedStops / totalStops) * 100) : 0;
 
   if (!currentStop) {
     return (
@@ -70,10 +147,49 @@ const DriverRoute = ({ route, onRefresh }) => {
     <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
       <h2 style={{ textAlign: "center" }}>Current Stop</h2>
 
+      {/* ✅ Auto-arrival banner */}
+      {arrivedPrompt && (
+        <div style={{
+          background: "#22c55e", color: "white",
+          padding: "16px", borderRadius: "12px",
+          textAlign: "center", marginBottom: "16px",
+          fontSize: "20px", fontWeight: "bold",
+          animation: "pulse 1s infinite",
+        }}>
+          📍 You have arrived at {currentStop.postcode}!
+          <br />
+          <span style={{ fontSize: "16px", fontWeight: "normal" }}>
+            Tap Delivered once done
+          </span>
+        </div>
+      )}
+
       <div style={{ border: "1px solid #ccc", borderRadius: "12px", padding: "25px" }}>
         <h1 style={{ fontSize: "5rem", textAlign: "center", marginBottom: "20px" }}>
           {currentStop.postcode}
         </h1>
+
+        {/* ✅ Live distance indicator */}
+        {distanceToStop !== null && (
+          <p style={{
+            textAlign: "center", fontSize: "20px",
+            color: distanceToStop <= ARRIVAL_RADIUS_METRES ? "#22c55e" : "#f97316",
+            fontWeight: "bold", marginBottom: "10px",
+          }}>
+            📡 {distanceToStop <= ARRIVAL_RADIUS_METRES
+              ? "You are here!"
+              : `${distanceToStop}m away`}
+          </p>
+        )}
+
+        {locationError && (
+          <p style={{
+            textAlign: "center", fontSize: "14px",
+            color: "#888", marginBottom: "10px",
+          }}>
+            ⚠️ {locationError}
+          </p>
+        )}
 
         <p style={{ textAlign: "center", fontSize: "24px" }}>
           Stops Remaining: {remainingStops}
@@ -98,19 +214,16 @@ const DriverRoute = ({ route, onRefresh }) => {
           }} />
         </div>
 
+        {/* ✅ Navigate button — now opens turn-by-turn directions */}
         <button
-          onClick={() => {
-            window.open(
-              `https://www.google.com/maps/search/?api=1&query=${currentStop.latitude},${currentStop.longitude}`,
-              "_blank"
-            );
-          }}
+          onClick={handleNavigate}
           style={{
             width: "100%", padding: "18px", fontSize: "20px",
             marginBottom: "15px", borderRadius: "10px", cursor: "pointer",
+            background: "#1a73e8", color: "white", border: "none",
           }}
         >
-          🧭 Navigate
+          🧭 Start Navigation
         </button>
 
         <button
@@ -118,10 +231,36 @@ const DriverRoute = ({ route, onRefresh }) => {
           style={{
             width: "100%", padding: "18px", fontSize: "20px",
             borderRadius: "10px", cursor: "pointer",
+            background: arrivedPrompt ? "#22c55e" : undefined,
+            color: arrivedPrompt ? "white" : undefined,
+            border: "none",
           }}
         >
           ✅ Delivered
         </button>
+      </div>
+
+      {/* Upcoming stops preview */}
+      <div style={{ marginTop: "24px" }}>
+        <h3 style={{ marginBottom: "12px" }}>📋 Upcoming Stops</h3>
+        {route
+          .filter((stop) => !stop.completed && stop._id !== currentStop._id)
+          .slice(0, 3) // show next 3 only
+          .map((stop, index) => (
+            <div key={stop._id} style={{
+              padding: "12px 16px", marginBottom: "8px",
+              border: "1px solid #ccc", borderRadius: "10px",
+              display: "flex", justifyContent: "space-between",
+              alignItems: "center", opacity: 0.7,
+            }}>
+              <span style={{ fontSize: "18px" }}>
+                #{index + 2} — {stop.postcode}
+              </span>
+              <span style={{ fontSize: "14px", color: "#888" }}>
+                {stop.distanceFromPrevious?.toFixed(1)} km
+              </span>
+            </div>
+          ))}
       </div>
     </div>
   );
