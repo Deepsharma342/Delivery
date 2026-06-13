@@ -18,6 +18,12 @@ app.use(
       "http://localhost:5173",
       "https://deepaustralia.netlify.app",
     ],
+     methods: [
+      "GET",
+      "POST",
+      "PATCH",
+      "DELETE",
+    ],
     credentials: true,
   })
 );
