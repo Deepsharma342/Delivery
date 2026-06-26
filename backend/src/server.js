@@ -17,6 +17,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://deepaustralia.netlify.app",
+      "https://nityant-tech-cn5n.onrender.com"
     ],
      methods: [
       "GET",
